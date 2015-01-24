@@ -1,0 +1,53 @@
+---
+title: 'Manual or automatic: how does affect fuel performance?'
+author: "Javier Santibáñez"
+date: "Saturday, January 24, 2015"
+output: pdf_document
+---
+
+## Summary
+
+In this report we present the results of a comparison between manual and automatic vehicles, measured in miles per gallon of fuel (mpg). The results shows that automatic cars has a better performance than manual cars. The expected difference was estimated in XXX mpg.
+
+## Introduction
+
+We used a data set that consists of the measurements of `r dim(mtcars)[2]` variables from  observations of cars from `r dim(mtcars)[1]` cars.
+
+## Methodology
+
+We use the software statistical enviroment `R` and the package `ggplot2` for graphics.
+
+```{r,echo=FALSE}
+suppressWarnings(suppressMessages(library(ggplot2)))
+mtcars$am2<-factor(mtcars$am,labels=c("Automatic","Manual"))
+```
+## Results
+
+### Exploratory analysis
+First we estimate asimple mode
+
+```{r}
+g<-ggplot(data=mtcars,aes(factor(am2),mpg))
+g+geom_boxplot(aes(fill=am2))+
+  xlab("Transmission")+ylab("Miles per gallon")+labs(fill="Transmission")+
+  ggtitle("Performance vs. transmision")
+```
+
+Second, we introduced a 
+```{r}
+g<-ggplot(data=mtcars,aes(x=mpg,y=hp))+geom_point(color="steelblue",size=5)
+g+facet_grid(.~am2)+geom_smooth(method="lm")+
+  xlab("Weight (in tons)")+ylab("Miles per gallon")+ggtitle("Performance vs. weigth by transmision")
+```
+### Inferential analysis
+```{r}
+fitMod1<-lm(mpg~am2,data=mtcars)
+fitMod2<-lm()
+```
+
+
+
+
+
+
+
