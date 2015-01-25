@@ -120,14 +120,24 @@ We evaluated the assuption of normality with a *qq-plot* and it seems that there
 qqnorm(fitMod2$residual,pch=20,col="steelblue")
 ```
 
-### Step 4. Compare models.
+### Step 4. Comparing models.
 
-We estimated two models. An analysis of variance (ANOVA) shows that 
-```{r}
+We estimated two models. An analysis of variance (ANOVA) shows that the extended model is better than the basic model, with a high level of significance. 
+
+```{r,results='asis'}
 kable(anova(fitMod1,fitMod3))
 ```
 
+Also, the ratio of the sum of squared residuals of the extended model to the basic model is `r round(sum(fitMod3$residual**2)/sum(fitMod1$residual**2),3)`, which means that the residual variation of the extended model is `r round(sum(fitMod3$residual**2)/sum(fitMod1$residual**2)*100,1)`% smallet than the residual variation of the basic model.
+
 ## Conclusions
+
+According to the preceding results we can conclude that:
+
+1. A manual transmission is better than an automatic one, in terms of performance, measured in miles per gallon.
+
+2. There is a difference of `r coef(fitMod3)[2]` miles per gallon between manual and automatic transmissions.
+
 
 
 
