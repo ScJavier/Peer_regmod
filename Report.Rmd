@@ -11,41 +11,123 @@ In this report we present the results of a comparison between manual and automat
 
 ## Introduction
 
-We used a data set that consists of the measurements of `r dim(mtcars)[2]` variables from  observations of cars from `r dim(mtcars)[1]` cars.
+We used a data set that consists of the measurements of `r dim(mtcars)[2]` variables from  observations of cars from `r dim(mtcars)[1]` cars. The variables are the following:
 
-## Methodology
+- `mpg`, miles(US)/gallon
+- `cyl`, number of cylinders
+- `dip`, displacement (cu.in.)
+- `hp`,  gross horsepower
+- `drat`, rear axie ratio
+- `wt`, weigth (lb/1000)
+- `qsec` 1/4 mile time
+- `vs` V/S
+- `am` transmission (automatic, manual)
+- `gear`, number of forward gears
+- `carb`, number of carburetors
 
-We use the software statistical enviroment `R` and the package `ggplot2` for graphics.
+Additionaly, we created a new variable, called `am2`, which is the factor version of `am` with levels *automatic* and *manual*.
 
-```{r,echo=FALSE}
-suppressWarnings(suppressMessages(library(ggplot2)))
-mtcars$am2<-factor(mtcars$am,labels=c("Automatic","Manual"))
-```
-## Results
+In this report we have to address the questions:
 
-### Exploratory analysis
-First we estimate asimple mode
+1. **Is an automatic or manual transmission better for performance?**
+2. **What is the difference in performance between automatic and manual transmissions?**
+
+To deal with this questions we used a statistical approach, in specific, we used regression models. 
+
+The first qustion can be easily answered. Figure *Performance vs. transmission* suggests that performance, measured in miles per gallon, depends of the car transmissions.
 
 ```{r}
+suppressWarnings(suppressMessages(library(ggplot2)))
+suppressWarnings(suppressMessages(library(knitr)))
+suppressWarnings(suppressMessages(library(corrplot)))
+mtcars$am2<-factor(mtcars$am,labels=c("Automatic","Manual"))
 g<-ggplot(data=mtcars,aes(factor(am2),mpg))
 g+geom_boxplot(aes(fill=am2))+
   xlab("Transmission")+ylab("Miles per gallon")+labs(fill="Transmission")+
   ggtitle("Performance vs. transmision")
 ```
 
-Second, we introduced a 
-```{r}
-g<-ggplot(data=mtcars,aes(x=mpg,y=hp))+geom_point(color="steelblue",size=5)
-g+facet_grid(.~am2)+geom_smooth(method="lm")+
-  xlab("Weight (in tons)")+ylab("Miles per gallon")+ggtitle("Performance vs. weigth by transmision")
-```
-### Inferential analysis
-```{r}
+Despite the previous graphic, we must verify that manual trasmission is better than automatic trasnmission. Also, it is important to consider other variables, because some of them can explain part of the variability. 
+
+Finally, we used the software statistical enviroment `R` and the packages `ggplot2` and `corrplot` for graphics.
+
+## Methodology
+
+The following is a brief description of the analysis performed:
+
+1. Fit a regression model with `mpg` (performance) as output and `am` (transmission) as input.
+
+2. Select other covariables from the data set, considering their correlation with `mpg`.
+
+3. Fit a regression model with `mpg` as output and the set of variables from the preceding step as input.
+
+4. Evaluate and compare models fitted in steps 1 and 4.
+
+## Results
+
+### Step 1. Basic model.
+The basic model consists in only one input (`mpg`). We used the next code to fit the model.
+```{r,}
 fitMod1<-lm(mpg~am2,data=mtcars)
-fitMod2<-lm()
+summary(fitMod1)
 ```
 
+The previous results indicates that there is a highly significant difference in perfomance between automatic and manual transmission, estimated as `r coef(fitMod1)[2]` miles per gallon, on average. With this information we can answer our two questions, but we improve them with the following steps. 
 
+We verify the accuracy of the normal assumption with a *qq-plot*, it shows that the residuals are aproximately normal distributed.
+```{r}
+qqnorm(fitMod1$residual,pch=20,col="steelblue")
+```
+
+### Step 2. Select new variables.
+
+To select new variables to include in the model, we used the correlation matrix via the `corrplot` function. From Figure *Correlation matrix* we can identify a set of variables
+highly correlated:
+
+- `r mtcars[,2]`
+- `r mtcars[,3]`
+- `r mtcars[,4]`
+- `r mtcars[,5]`
+
+Despite this result, we cannot include the whole set of variables because there are a high correlation between them. Then, we have tho choose one variable from that set. We select the variable `hp` because we can use it as a confounder in a extended model, to reduce variability and to improve the estimation of difference in `mpg` due to transmission. 
+
+```{r}
+cor_mtcars<-cor(mtcars[,-12])
+corrplot(cor_mtcars,diag=F,title="Correlation matrix")
+```
+
+### Step 3. Extended model.
+
+Now we extend our basic model adding the variable `hp`. First we fit a model with an interection term with the following code.
+```{r}
+fitMod2<-lm(mpg~am2+hp+am2*hp,data=mtcars)
+summary(fitMod2)
+```
+
+The previous results suggest that there is evidence to support the hipotesis that the interaction term is not necessary.
+
+We fit a new model wihtout the interaction term between `am` and `hp`, these are the results:
+```{r}
+fitMod3<-lm(mpg~am2+hp,data=mtcars)
+summary(fitMod3)
+```
+
+These results suggest support again that there is a difference in performace between automatic and manual transmission, estimated in `r coef(fitMod3)[2]` miles per gallon, but in the case, we take into account a confounder that explains some of the residual variability.
+
+We evaluated the assuption of normality with a *qq-plot* and it seems that there is no problems with normality.
+
+```{r}
+qqnorm(fitMod2$residual,pch=20,col="steelblue")
+```
+
+### Step 4. Compare models.
+
+We estimated two models. An analysis of variance (ANOVA) shows that 
+```{r}
+kable(anova(fitMod1,fitMod3))
+```
+
+## Conclusions
 
 
 
