@@ -2,7 +2,9 @@
 title: 'Manual or automatic: how does affect fuel performance?'
 author: "Javier Santibáñez"
 date: "Saturday, January 24, 2015"
-output: pdf_document
+output: 
+  pdf_document:
+    fig_caption: yes
 ---
 
 ## Summary
@@ -29,22 +31,18 @@ Additionaly, we created a new variable, called `am2`, which is the factor versio
 
 In this report we have to address the questions:
 
-1. **Is an automatic or manual transmission better for performance?**
-2. **What is the difference in performance between automatic and manual transmissions?**
+1. Is an automatic or manual transmission better for performance?
+2. What is the difference in performance between automatic and manual transmissions?
 
 To deal with this questions we used a statistical approach, in specific, we used regression models. 
 
-The first qustion can be easily answered. Figure *Performance vs. transmission* suggests that performance, measured in miles per gallon, depends of the car transmissions.
+The first qustion can be easily answered. Figure *Performance vs. transmission* in Appendix suggests that performance, measured in miles per gallon, depends of the car transmissions.
 
-```{r}
+```{r,echo=FALSE}
 suppressWarnings(suppressMessages(library(ggplot2)))
 suppressWarnings(suppressMessages(library(knitr)))
 suppressWarnings(suppressMessages(library(corrplot)))
 mtcars$am2<-factor(mtcars$am,labels=c("Automatic","Manual"))
-g<-ggplot(data=mtcars,aes(factor(am2),mpg))
-g+geom_boxplot(aes(fill=am2))+
-  xlab("Transmission")+ylab("Miles per gallon")+labs(fill="Transmission")+
-  ggtitle("Performance vs. transmision")
 ```
 
 Despite the previous graphic, we must verify that manual trasmission is better than automatic trasnmission. Also, it is important to consider other variables, because some of them can explain part of the variability. 
@@ -74,27 +72,20 @@ summary(fitMod1)
 
 The previous results indicates that there is a highly significant difference in perfomance between automatic and manual transmission, estimated as `r coef(fitMod1)[2]` miles per gallon, on average. With this information we can answer our two questions, but we improve them with the following steps. 
 
-We verify the accuracy of the normal assumption with a *qq-plot*, it shows that the residuals are aproximately normal distributed.
-```{r}
-qqnorm(fitMod1$residual,pch=20,col="steelblue")
-```
+We verify the accuracy of the normal assumption with a *qq-plot*. Figure 2 shows that the residuals are aproximately normal distributed.
+
 
 ### Step 2. Select new variables.
 
-To select new variables to include in the model, we used the correlation matrix via the `corrplot` function. From Figure *Correlation matrix* we can identify a set of variables
+To select new variables to include in the model, we used the correlation matrix via the `corrplot` function. From Figure 3 we can identify a set of variables
 highly correlated:
 
-- `r mtcars[,2]`
-- `r mtcars[,3]`
-- `r mtcars[,4]`
-- `r mtcars[,5]`
+- `r names(mtcars)[2]`
+- `r names(mtcars)[3]`
+- `r names(mtcars)[4]`
+- `r names(mtcars)[5]`
 
 Despite this result, we cannot include the whole set of variables because there are a high correlation between them. Then, we have tho choose one variable from that set. We select the variable `hp` because we can use it as a confounder in a extended model, to reduce variability and to improve the estimation of difference in `mpg` due to transmission. 
-
-```{r}
-cor_mtcars<-cor(mtcars[,-12])
-corrplot(cor_mtcars,diag=F,title="Correlation matrix")
-```
 
 ### Step 3. Extended model.
 
@@ -114,15 +105,11 @@ summary(fitMod3)
 
 These results suggest support again that there is a difference in performace between automatic and manual transmission, estimated in `r coef(fitMod3)[2]` miles per gallon, but in the case, we take into account a confounder that explains some of the residual variability.
 
-We evaluated the assuption of normality with a *qq-plot* and it seems that there is no problems with normality.
-
-```{r}
-qqnorm(fitMod2$residual,pch=20,col="steelblue")
-```
+We evaluated the assuption of normality with a *qq-plot*. Figure 4 shows that there is no problems with normality. Also, to check corralation between residuals an covariables we made a scatter plot. In Figure 5 we showed that the slope of a regression line of residuals over the covariable `hp` is aproximately zero, which suggests that there is no correlation problems.
 
 ### Step 4. Comparing models.
 
-We estimated two models. An analysis of variance (ANOVA) shows that the extended model is better than the basic model, with a high level of significance. 
+We estimated two models. An analysis of variance (ANOVA) shows that the extended model is better than the basic model, with a high level of significance (p-value less than 0.05). 
 
 ```{r,results='asis'}
 kable(anova(fitMod1,fitMod3))
@@ -139,6 +126,34 @@ According to the preceding results we can conclude that:
 2. There is a difference of `r coef(fitMod3)[2]` miles per gallon between manual and automatic transmissions.
 
 
+
+## Appendix
+
+```{r,fig.cap="Performance vs. transmision",echo=FALSE,include=TRUE}
+g1<-ggplot(data=mtcars,aes(factor(am2),mpg))
+g1+geom_boxplot(aes(fill=am2))+
+  xlab("Transmission")+ylab("Miles per gallon")+labs(fill="Transmission")
+```
+
+```{r,fig.cap="QQ plot for residuals of basic model",include=TRUE,echo=FALSE}
+qqnorm(fitMod1$residual,pch=20,col="steelblue",main="")
+```
+
+```{r,fig.cap="Correlation matrix",include=TRUE,echo=FALSE}
+cor_mtcars<-cor(mtcars[,-12])
+corrplot(cor_mtcars,diag=F)
+```
+
+```{r,fig.cap="QQ plot for residuals of extended model",include=TRUE,echo=FALSE}
+qqnorm(fitMod3$residual,pch=20,col="steelblue",main="")
+```
+
+```{r,fig.cap="Scatter plot: residuals versus gross horse power",include=TRUE,echo=FALSE}
+data_plot2<-data.frame(hp=mtcars$hp,Residuals=fitMod3$residual)
+g2<-ggplot(data_plot2,aes(x=hp,y=Residuals))
+g2+geom_point(color="steelblue",size=3)+geom_smooth(method="lm")+
+  xlab("Gross horse power")+ylab("Residual")
+```
 
 
 
